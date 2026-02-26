@@ -3,7 +3,7 @@ import torch
 
 class SentimentRNN(nn.Module):
     def __init__(self, vocab_size, embed_size, hidden_size, output_size):
-        uper(SentimentRNN, self).__init__()
+        super(SentimentRNN, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embed_size)
         self.rnn = nn.RNN(embed_size, hidden_size, batch_first=True)
         self.fc = nn.Linear(hidden_size, output_size)
