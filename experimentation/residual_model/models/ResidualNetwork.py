@@ -21,8 +21,8 @@ class ResNet(nn.Module):
     def _make_layer(self, block, out_channels, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
         layers = []
-        for stide in strides:
-            layers.append(block(self.in_channels, out_channels, stride))
+        for s in strides:
+            layers.append(block(self.in_channels, out_channels, s))
             self.in_channels = out_channels
         return nn.Sequential(*layers)
 

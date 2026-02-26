@@ -31,7 +31,9 @@ if __name__ == '__main__':
     classes = ('plane','car','bird','cat','deer','dog','frog','horse','ship','truck')
 
     device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
+    print(f"Using device: {device}")
     model = ResNet().to(device)
+    print(f"Model loaded with {sum(p.numel() for p in model.parameters())} parameters")
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
@@ -39,12 +41,16 @@ if __name__ == '__main__':
 
     num_epochs = 10
     train_losses, train_acc_list, test_acc_list = [], [], []
+    
+    print(f"Starting training for {num_epochs} epochs...")
+    print(f"Training batches: {len(trainloader)}, Test batches: {len(testloader)}")
 
     for epoch in range(num_epochs):
+        print(f"\nEpoch {epoch+1}/{num_epochs}")
         model.train()
         running_loss = 0.0
         correct, total = 0, 0
-        for inputs, labels in trainloader:
+        for batch_idx, (inputs, labels) in enumerate(trainloader):
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -56,6 +62,9 @@ if __name__ == '__main__':
             _, predicted = outputs.max(1)
             total += labels.size(0)
             correct += predicted.eq(labels).sum().item()
+            
+            if (batch_idx + 1) % 50 == 0:
+                print(f"  Batch {batch_idx+1}/{len(trainloader)} - Loss: {loss.item():.4f}")
         
         train_loss = running_loss / len(trainloader.dataset)
         train_acc = 100. * correct / total
