@@ -1,6 +1,6 @@
 import torch 
 import torch.nn as nn
-from models.ResidualBlock import ResidualBlock
+from .ResidualBlock import ResidualBlock
 
 class ResNet(nn.Module):
     def __init__(self, num_classes=10):
