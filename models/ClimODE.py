@@ -61,5 +61,27 @@ class ClimODE(nn.Module):
         dvs = torch.cat([dv, ds], 1)
         return dvs
 
-    def forward(self, x):
+    def noise(self, t, pos_enc, s_final, noise_net, H, W):
+        time_embedding = (t % 24).view(-1, 1, 1, 1, 1)
+        sin_t_emb = torch.sin(torch.pi*t_emb/12 - torch.pi/2).expand(len(s_final),s_final.shape[1],1,H,W)
+        cos_t_emb = torch.cos(torch.pi*t_emb/12 - torch.pi/2).expand(len(s_final),s_final.shape[1],1,H,W)
+        
+        sin_seas_emb = torch.sin(torch.pi*t_emb/(12*365)- torch.pi/2).expand(len(s_final),s_final.shape[1],1,H,W)
+        cos_seas_emb = torch.cos(torch.pi*t_emb/(12*365)- torch.pi/2).expand(len(s_final),s_final.shape[1],1,H,W)
+
+        pos_enc = pos_enc.expand(len(s_final),s_final.shape[1],-1,H,W).flatten(start_dim=0,end_dim=1)
+        t_cyc_emb = torch.cat([sin_t_emb,cos_t_emb,sin_seas_emb,cos_seas_emb],dim=2).flatten(start_dim=0,end_dim=1)
+
+        pos_time_ft = self.get_time_pos_embedding(t_cyc_emb,pos_enc[:,2:-2])
+
+        comb_rep = torch.cat([t_cyc_emb,s_final.flatten(start_dim=0,end_dim=1),pos_enc,pos_time_ft],dim=1)
+
+        final_out = noise_net(comb_rep).view(len(t),-1,2*self.out_ch,H,W)
+
+        mean = s_final + final_out[:,:,:self.out_ch]
+        std = nn.Softplus()(final_out[:,:,self.out_ch:])
+        
+        return mean,std
+
+    def forward(self, x): # TODO.implement
         pass
