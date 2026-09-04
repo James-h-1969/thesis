@@ -4,7 +4,7 @@
 
 **Neural ODE-based spatiotemporal forecasting for ocean & climate data**
 
-[![CI](https://github.com/James-h-1969/thesis/actions/workflows/ci.yml/badge.svg)](https://github.com/James-h-1969/thesis/actions/workflows/ci.yml)
+[![CI](https://github.com/James-h-1969/seaseer/actions/workflows/ci.yml/badge.svg)](https://github.com/James-h-1969/seaseer/actions/workflows/ci.yml)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
@@ -15,7 +15,30 @@
 
 ## Overview
 
-SeaSeer is a deep learning model that uses **Neural ODEs** to learn transport dynamics for spatiotemporal ocean/climate forecasting. It combines a convolutional velocity network with optional attention and emission (uncertainty) branches built on a ResNet backbone.
+SeaSeer is a deep learning model for forecasting ocean state a day ahead, built as an honours thesis on predicting marine heat waves in the Great Barrier Reef region.
+
+The idea is to learn the **transport dynamics** of the ocean rather than the state directly: a convolutional network predicts a velocity field from the current state, and that field is integrated forward in time as a Neural ODE to produce the next state.
+
+## How it works
+
+**Inputs.** Daily fields on a 0.25° grid over 10°S–25°S, 142°E–154°E from 1993–2018:
+
+| Source | Variables |
+|--------|-----------|
+| ERA5 (Copernicus CDS) | Shortwave and longwave radiation, latent and sensible heat flux |
+| NOAA OISST | Sea surface temperature |
+| CMEMS (Copernicus Marine) | Surface currents, mixed-layer depth, bottom temperature, vertical velocity |
+
+`dataloader.py` aligns every source to the common grid and daily timestep and serves `(state at t, state at t+1)` pairs.
+
+**Model** (`model.py`). A ResNet velocity network predicts the flow field from the input channels. Two optional branches can be switched on:
+
+- an attention velocity branch, blended in with a learned weight;
+- an emission head that outputs a mean and standard deviation so predictions carry an uncertainty estimate.
+
+**Training** (`train.py`). AdamW with an MSE loss on the next-day state, saving a checkpoint to `model_checkpoints/`.
+
+Status: the velocity network and data pipeline are in place; ODE integration in the forward pass and the evaluation data loader are still to be implemented.
 
 ## Getting Started
 
@@ -27,8 +50,8 @@ SeaSeer is a deep learning model that uses **Neural ODEs** to learn transport dy
 ### Installation
 
 ```bash
-git clone git@github.com:James-h-1969/thesis.git
-cd thesis
+git clone git@github.com:James-h-1969/seaseer.git
+cd seaseer
 uv sync
 pre-commit install
 ```
@@ -89,4 +112,4 @@ Makefile                  # Train/eval/data shortcuts
 ```
 
 ## Thesis
-This is part of the work done by James Hocking for his thesis 'Seaseer: A Neural ODE for predicting Marine Heat Waves.
+This repository holds the code for James Hocking's honours thesis, *SeaSeer: A Neural ODE for Predicting Marine Heat Waves*, at the University of Sydney.
